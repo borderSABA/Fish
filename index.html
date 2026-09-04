@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Freshwater Fly Online v1.1 — 魚画像カード対応</title>
+<title>Freshwater Fly Online v1.2 — タイトル部屋初期化対応</title>
 <style>
 :root{
  --bg:#092624;--top:#071d1c;--panel:#123a35;--panel2:#1b4c44;--line:#4c746a;
@@ -2251,22 +2251,78 @@ button,select,input{font:inherit}button{border:1px solid #6d9288;background:#245
   .playerdetail-fishimg{max-height:42px}
 }
 
+
+/* Online v1.2 title room reset */
+.room-choice{
+  display:grid;
+  grid-template-rows:minmax(64px,1fr) 30px;
+  gap:5px;
+  min-width:0;
+}
+.room-choice .room-btn{
+  width:100%;
+}
+.title-room-reset{
+  width:100%;
+  min-height:30px;
+  padding:4px 6px!important;
+  font-size:10px!important;
+  font-weight:1000!important;
+}
+.title-room-reset:disabled{
+  opacity:.4!important;
+}
+.title-reset-note{
+  margin-top:5px;
+  text-align:center;
+  color:#b9ccc5;
+  font-size:10px;
+  line-height:1.4;
+}
+@media(max-width:900px){
+  .room-choice{
+    grid-template-rows:minmax(42px,1fr) 22px;
+    gap:3px;
+  }
+  .title-room-reset{
+    min-height:22px;
+    font-size:7px!important;
+    padding:2px 3px!important;
+  }
+  .title-reset-note{
+    font-size:6px;
+  }
+}
+
 </style>
 </head>
 <body>
 <div id="app">
 <section id="setup" class="setup"><div class="setupbox online-setupbox">
- <div class="logo">FRESHWATER FLY</div><div class="ver">Online v1.1 — 4ルーム同期版</div>
+ <div class="logo">FRESHWATER FLY</div><div class="ver">Online v1.2 — 4ルーム同期版</div>
  <div id="netStatus" class="net-status">名前を入力して部屋を選択してください。</div>
 
  <div id="roomSelectPanel">
    <div class="online-name-row"><label>プレイヤー名 <input id="onlineName" maxlength="16" placeholder="名前"></label></div>
    <div class="room-grid">
-     <button class="room-btn" data-room="room1">ROOM 1</button>
-     <button class="room-btn" data-room="room2">ROOM 2</button>
-     <button class="room-btn" data-room="room3">ROOM 3</button>
-     <button class="room-btn" data-room="room4">ROOM 4</button>
+     <div class="room-choice">
+       <button class="room-btn" data-room="room1">ROOM 1</button>
+       <button class="title-room-reset danger" data-reset-room="room1">初期化</button>
+     </div>
+     <div class="room-choice">
+       <button class="room-btn" data-room="room2">ROOM 2</button>
+       <button class="title-room-reset danger" data-reset-room="room2">初期化</button>
+     </div>
+     <div class="room-choice">
+       <button class="room-btn" data-room="room3">ROOM 3</button>
+       <button class="title-room-reset danger" data-reset-room="room3">初期化</button>
+     </div>
+     <div class="room-choice">
+       <button class="room-btn" data-room="room4">ROOM 4</button>
+       <button class="title-room-reset danger" data-reset-room="room4">初期化</button>
+     </div>
    </div>
+   <div class="title-reset-note">「初期化」は入室せず、そのROOMの参加者・ゲーム状態をすべて空にします。</div>
  </div>
 
  <div id="lobbyPanel" class="hidden">
@@ -2301,7 +2357,7 @@ button,select,input{font:inherit}button{border:1px solid #6d9288;background:#245
 
 <section id="game" class="game hidden">
 <header class="topbar">
- <div class="title">Freshwater Fly <span style="font-size:9px">Online v1.1</span></div>
+ <div class="title">Freshwater Fly <span style="font-size:9px">Online v1.2</span></div>
  <div class="badge">ROOM <span id="roomBadge">-</span></div><div class="badge">R <span id="round">1</span></div><div class="badge">手番 <span id="turn">-</span></div><div class="badge">先手 <span id="starter">-</span></div><div class="badge">終了 <span id="targetFishBadge">7</span>匹</div><div id="gameNetBadge" class="badge">● 接続</div>
  <div class="spacer"></div><button id="logBtn">ログ</button><button id="guide">行動説明</button><button id="rules">ルール</button><button id="roomResetTop" class="danger hidden">部屋リセット</button><button id="quit" class="danger">タイトル</button>
 </header>
@@ -3982,6 +4038,29 @@ NET.clientId=makeClientId();
 function wsUrl(){return NET.server.replace(/^https:/,"wss:").replace(/^http:/,"ws:")+`/ws/${NET.room}`}
 function netSetStatus(t,err=false){const e=$("#netStatus");if(!e)return;e.textContent=t;e.classList.toggle("error",!!err)}
 function netSend(obj){if(NET.ws&&NET.ws.readyState===WebSocket.OPEN)NET.ws.send(JSON.stringify(obj))}
+async function titleResetRoom(room){
+ if(!NET.server||NET.server.includes("YOUR_SUBDOMAIN")){
+   netSetStatus("config.js の SERVER_URL が設定されていません。",true);
+   return;
+ }
+ if(!confirm(`${room.toUpperCase()} を完全初期化しますか？\n参加者・進行中ゲーム・設定がすべて消えます。`))return;
+
+ const buttons=$$(".title-room-reset");
+ buttons.forEach(b=>b.disabled=true);
+ netSetStatus(`${room.toUpperCase()} を初期化しています…`);
+
+ try{
+   const res=await fetch(`${NET.server}/reset/${room}`,{method:"POST"});
+   let body=null;
+   try{body=await res.json()}catch(_){}
+   if(!res.ok)throw new Error(body?.error||`HTTP ${res.status}`);
+   netSetStatus(`${room.toUpperCase()} を初期化しました。`);
+ }catch(e){
+   netSetStatus(`${room.toUpperCase()} の初期化に失敗しました：${e.message||e}`,true);
+ }finally{
+   buttons.forEach(b=>b.disabled=false);
+ }
+}
 function connectRoom(room){
  const name=$("#onlineName").value.trim();
  if(!name){netSetStatus("プレイヤー名を入力してください。",true);return}
@@ -4014,6 +4093,11 @@ function handleNetMessage(msg){
  }
  if(msg.type==="room_reset"){
    S=null;flow=null;closeModalForce();$("#game").classList.add("hidden");$("#setup").classList.remove("hidden");NET.gameStarted=false;NET.lastSent="";renderLobby();netSetStatus("部屋をリセットしました。");return;
+ }
+ if(msg.type==="room_hard_reset"){
+   leaveRoom();
+   netSetStatus("この部屋はタイトル画面から初期化されました。");
+   return;
  }
 }
 function renderLobby(){
@@ -4080,6 +4164,7 @@ function applyOnlinePermissions(){
 function updateConnectionBadges(){const b=$("#gameNetBadge");if(b){b.textContent=NET.connected?"● 接続":"● 再接続中";b.style.opacity=NET.connected?"1":".55"}}
 
 $$('.room-btn').forEach(b=>b.onclick=()=>connectRoom(b.dataset.room));
+$$(".title-room-reset").forEach(b=>b.onclick=()=>titleResetRoom(b.dataset.resetRoom));
 $("#onlineName").value=localStorage.getItem("freshwater_fly_name")||"";
 $("#readyBtn").onclick=()=>netSend({type:"toggle_ready"});
 $("#onlineStartBtn").onclick=()=>netSend({type:"start_game"});
