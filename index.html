@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Freshwater Fly Online v1.2 — タイトル部屋初期化対応</title>
+<title>Freshwater Fly Online v1.3 — HIT魚枠見切れ修正</title>
 <style>
 :root{
  --bg:#092624;--top:#071d1c;--panel:#123a35;--panel2:#1b4c44;--line:#4c746a;
@@ -2294,12 +2294,116 @@ button,select,input{font:inherit}button{border:1px solid #6d9288;background:#245
   }
 }
 
+
+/* Online v1.3: hooked fish card must fit entirely inside reel area */
+.reelmeta{
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.hooked-card{
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  display:grid!important;
+  grid-template-rows:auto auto minmax(74px,1fr) auto auto!important;
+  gap:4px!important;
+  padding:7px 8px!important;
+  overflow:hidden!important;
+}
+.hooked-card .hook-label{
+  margin:0!important;
+  font-size:10px!important;
+  padding:2px 6px!important;
+  line-height:1.05!important;
+}
+.hooked-card .hook-name{
+  font-size:19px!important;
+  line-height:1!important;
+  margin:0!important;
+}
+.hooked-card .hook-fish-imgwrap{
+  min-height:0!important;
+  height:100%!important;
+  max-height:none!important;
+  padding:3px!important;
+}
+.hooked-card .hook-fish-img{
+  width:100%!important;
+  height:100%!important;
+  max-height:none!important;
+  object-fit:contain!important;
+}
+.hooked-card .hook-stats{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:4px!important;
+}
+.hooked-card .hook-stat{
+  min-width:0!important;
+  padding:3px 2px!important;
+  font-size:9px!important;
+  line-height:1.05!important;
+}
+.hooked-card .hook-stat b{
+  font-size:17px!important;
+  line-height:1!important;
+}
+.hooked-card .catch-progress{
+  margin-top:0!important;
+  gap:3px!important;
+}
+.hooked-card .catch-step{
+  padding:3px 1px!important;
+  font-size:8px!important;
+  line-height:1!important;
+}
+.hooked-card > div[style*="DRAG"]{
+  margin-top:0!important;
+  font-size:9px!important;
+  line-height:1!important;
+}
+
+/* Mobile keeps 2x2 stats so labels remain readable */
+@media(max-width:900px){
+  .hooked-card{
+    grid-template-rows:auto auto minmax(36px,1fr) auto auto!important;
+    gap:2px!important;
+    padding:3px!important;
+  }
+  .hooked-card .hook-label{
+    font-size:6px!important;
+    padding:1px 3px!important;
+  }
+  .hooked-card .hook-name{
+    font-size:10px!important;
+  }
+  .hooked-card .hook-fish-imgwrap{
+    min-height:0!important;
+    padding:1px!important;
+  }
+  .hooked-card .hook-stats{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:2px!important;
+  }
+  .hooked-card .hook-stat{
+    font-size:6px!important;
+    padding:1px!important;
+  }
+  .hooked-card .hook-stat b{
+    font-size:10px!important;
+  }
+  .hooked-card .catch-step{
+    font-size:5px!important;
+    padding:2px 1px!important;
+  }
+}
+
 </style>
 </head>
 <body>
 <div id="app">
 <section id="setup" class="setup"><div class="setupbox online-setupbox">
- <div class="logo">FRESHWATER FLY</div><div class="ver">Online v1.2 — 4ルーム同期版</div>
+ <div class="logo">FRESHWATER FLY</div><div class="ver">Online v1.3 — 4ルーム同期版</div>
  <div id="netStatus" class="net-status">名前を入力して部屋を選択してください。</div>
 
  <div id="roomSelectPanel">
@@ -2357,7 +2461,7 @@ button,select,input{font:inherit}button{border:1px solid #6d9288;background:#245
 
 <section id="game" class="game hidden">
 <header class="topbar">
- <div class="title">Freshwater Fly <span style="font-size:9px">Online v1.2</span></div>
+ <div class="title">Freshwater Fly <span style="font-size:9px">Online v1.3</span></div>
  <div class="badge">ROOM <span id="roomBadge">-</span></div><div class="badge">R <span id="round">1</span></div><div class="badge">手番 <span id="turn">-</span></div><div class="badge">先手 <span id="starter">-</span></div><div class="badge">終了 <span id="targetFishBadge">7</span>匹</div><div id="gameNetBadge" class="badge">● 接続</div>
  <div class="spacer"></div><button id="logBtn">ログ</button><button id="guide">行動説明</button><button id="rules">ルール</button><button id="roomResetTop" class="danger hidden">部屋リセット</button><button id="quit" class="danger">タイトル</button>
 </header>
