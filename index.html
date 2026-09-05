@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Freshwater Fly Online v1.3 — HIT魚枠見切れ修正</title>
+<title>Freshwater Fly Online v1.4 — 共有ピン機能</title>
 <style>
 :root{
  --bg:#092624;--top:#071d1c;--panel:#123a35;--panel2:#1b4c44;--line:#4c746a;
@@ -2398,12 +2398,74 @@ button,select,input{font:inherit}button{border:1px solid #6d9288;background:#245
   }
 }
 
+
+/* Online v1.4 shared board ping */
+.riverwrap{position:relative!important}
+.board-ping-layer{
+  position:absolute;inset:0;z-index:45;pointer-events:none;overflow:visible;
+}
+.pin-btn.active{
+  outline:3px solid #f0cb61!important;
+  background:#7d6323!important;
+  box-shadow:0 0 0 2px #fff4 inset,0 0 12px #f0cb6177!important;
+}
+#boardPingArea.pin-target{
+  cursor:crosshair!important;
+  outline:3px solid #f0cb61!important;
+  outline-offset:-3px!important;
+}
+.board-ping{
+  --ping-color:#e45a59;
+  position:absolute;
+  transform:translate(-50%,-100%);
+  z-index:2;
+  pointer-events:none;
+  animation:boardPingPop .18s ease-out,boardPingFade .35s ease-in 2.65s forwards;
+}
+.board-ping-shape{
+  position:relative;width:28px;height:28px;
+  background:var(--ping-color);
+  border:3px solid #fff;
+  border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);
+  box-shadow:0 2px 7px #000a;
+}
+.board-ping-shape::after{
+  content:"";position:absolute;width:8px;height:8px;left:7px;top:7px;
+  border-radius:50%;background:#fff;
+}
+.board-ping-name{
+  position:absolute;left:50%;top:-27px;transform:translateX(-50%);
+  white-space:nowrap;background:#081e1ccc;
+  border:2px solid var(--ping-color);border-radius:999px;
+  padding:3px 7px;color:#fff;font-size:10px;line-height:1;font-weight:1000;
+  text-shadow:0 1px 2px #000;box-shadow:0 2px 6px #0007;
+}
+@keyframes boardPingPop{
+  from{opacity:0;transform:translate(-50%,-75%) scale(.55)}
+  to{opacity:1;transform:translate(-50%,-100%) scale(1)}
+}
+@keyframes boardPingFade{to{opacity:0}}
+.pin-float{display:none}
+@media(max-width:900px){
+  #pinBtnTop{display:none!important}
+  .pin-float{
+    display:block!important;position:fixed!important;right:8px!important;bottom:8px!important;
+    z-index:75!important;min-width:52px!important;min-height:31px!important;
+    padding:5px 8px!important;border-radius:999px!important;font-size:9px!important;
+    box-shadow:0 4px 14px #0008!important;
+  }
+  .board-ping-shape{width:20px;height:20px;border-width:2px}
+  .board-ping-shape::after{width:6px;height:6px;left:5px;top:5px}
+  .board-ping-name{top:-22px;font-size:7px;padding:2px 5px;border-width:1px}
+}
+
 </style>
 </head>
 <body>
 <div id="app">
 <section id="setup" class="setup"><div class="setupbox online-setupbox">
- <div class="logo">FRESHWATER FLY</div><div class="ver">Online v1.3 — 4ルーム同期版</div>
+ <div class="logo">FRESHWATER FLY</div><div class="ver">Online v1.4 — 4ルーム同期版</div>
  <div id="netStatus" class="net-status">名前を入力して部屋を選択してください。</div>
 
  <div id="roomSelectPanel">
@@ -2461,9 +2523,9 @@ button,select,input{font:inherit}button{border:1px solid #6d9288;background:#245
 
 <section id="game" class="game hidden">
 <header class="topbar">
- <div class="title">Freshwater Fly <span style="font-size:9px">Online v1.3</span></div>
+ <div class="title">Freshwater Fly <span style="font-size:9px">Online v1.4</span></div>
  <div class="badge">ROOM <span id="roomBadge">-</span></div><div class="badge">R <span id="round">1</span></div><div class="badge">手番 <span id="turn">-</span></div><div class="badge">先手 <span id="starter">-</span></div><div class="badge">終了 <span id="targetFishBadge">7</span>匹</div><div id="gameNetBadge" class="badge">● 接続</div>
- <div class="spacer"></div><button id="logBtn">ログ</button><button id="guide">行動説明</button><button id="rules">ルール</button><button id="roomResetTop" class="danger hidden">部屋リセット</button><button id="quit" class="danger">タイトル</button>
+ <div class="spacer"></div><button id="pinBtnTop" class="pin-btn">📍ピン</button><button id="logBtn">ログ</button><button id="guide">行動説明</button><button id="rules">ルール</button><button id="roomResetTop" class="danger hidden">部屋リセット</button><button id="quit" class="danger">タイトル</button>
 </header>
 <div class="layout">
 <main class="main">
@@ -2475,7 +2537,7 @@ button,select,input{font:inherit}button{border:1px solid #6d9288;background:#245
   </div>
   <div id="topFly" class="topfly"></div>
 </div>
- <section class="riverwrap"><div id="river" class="river"></div><div id="hatches" class="hatchrow"></div></section>
+ <section id="boardPingArea" class="riverwrap"><div id="river" class="river"></div><div id="hatches" class="hatchrow"></div><div id="boardPingLayer" class="board-ping-layer"></div></section>
  <section class="action">
    <div class="reelbox">
      <div><div id="wheel" class="wheel" style="--rot:0deg"></div></div>
@@ -2527,6 +2589,7 @@ button,select,input{font:inherit}button{border:1px solid #6d9288;background:#245
  <div class="common"><b>共通目標</b><div id="commonGoals" class="common-goals"></div></div>
 </aside>
 </div></section>
+<button id="pinBtnFloat" class="pin-btn pin-float">📍ピン</button>
 </div>
 <div id="modalbg" class="modalbg hidden"><div id="modal" class="modal"></div></div>
 
@@ -4132,6 +4195,53 @@ const NET={
  ws:null,room:null,clientId:null,name:null,hostId:null,roomState:null,
  connected:false,gameStarted:false,applyingRemote:false,syncTimer:null,lastSent:"",revision:0
 };
+const PIN={
+ active:false,
+ colors:["#e45757","#4f8fe8","#e1b942","#57aa69"]
+};
+function setPinMode(on){
+ PIN.active=!!on;
+ $("#pinBtnTop")?.classList.toggle("active",PIN.active);
+ $("#pinBtnFloat")?.classList.toggle("active",PIN.active);
+ $("#boardPingArea")?.classList.toggle("pin-target",PIN.active);
+}
+function togglePinMode(){
+ if(!NET.connected||!NET.gameStarted||!S)return;
+ setPinMode(!PIN.active);
+}
+function sendBoardPing(e){
+ if(!PIN.active||!NET.connected||!NET.gameStarted)return false;
+ const area=$("#boardPingArea");
+ if(!area)return false;
+ const r=area.getBoundingClientRect();
+ const x=clamp((e.clientX-r.left)/Math.max(1,r.width),0,1);
+ const y=clamp((e.clientY-r.top)/Math.max(1,r.height),0,1);
+ netSend({type:"board_ping",x,y});
+ setPinMode(false);
+ return true;
+}
+function showBoardPing(msg){
+ const layer=$("#boardPingLayer");
+ if(!layer)return;
+ const x=clamp(Number(msg.x)||0,0,1);
+ const y=clamp(Number(msg.y)||0,0,1);
+ const idx=clamp(parseInt(msg.colorIndex||0,10),0,PIN.colors.length-1);
+ const el=document.createElement("div");
+ el.className="board-ping";
+ el.style.left=`${x*100}%`;
+ el.style.top=`${y*100}%`;
+ el.style.setProperty("--ping-color",PIN.colors[idx]);
+
+ const shape=document.createElement("div");
+ shape.className="board-ping-shape";
+ const label=document.createElement("div");
+ label.className="board-ping-name";
+ label.textContent=msg.name||"PLAYER";
+
+ el.append(shape,label);
+ layer.appendChild(el);
+ setTimeout(()=>el.remove(),3050);
+}
 function makeClientId(){
  const key="freshwater_fly_client_id";
  let id=localStorage.getItem(key);
@@ -4180,6 +4290,7 @@ function connectRoom(room){
 }
 function handleNetMessage(msg){
  if(msg.type==="error"){netSetStatus(msg.message||"エラー",true);return}
+ if(msg.type==="board_ping"){showBoardPing(msg);return}
  if(msg.type==="room_state"){
    NET.roomState=msg.room;NET.hostId=msg.room.hostId;NET.gameStarted=!!msg.room.gameStarted;
    renderLobby();updateConnectionBadges();return;
@@ -4196,10 +4307,10 @@ function handleNetMessage(msg){
    applyRemoteGameState(msg.state);return;
  }
  if(msg.type==="room_reset"){
-   S=null;flow=null;closeModalForce();$("#game").classList.add("hidden");$("#setup").classList.remove("hidden");NET.gameStarted=false;NET.lastSent="";renderLobby();netSetStatus("部屋をリセットしました。");return;
+   setPinMode(false);S=null;flow=null;closeModalForce();$("#game").classList.add("hidden");$("#setup").classList.remove("hidden");NET.gameStarted=false;NET.lastSent="";renderLobby();netSetStatus("部屋をリセットしました。");return;
  }
  if(msg.type==="room_hard_reset"){
-   leaveRoom();
+   setPinMode(false);leaveRoom();
    netSetStatus("この部屋はタイトル画面から初期化されました。");
    return;
  }
@@ -4280,6 +4391,15 @@ $("#commonMode").onchange=updateLobbyConfig;$("#personalMode").onchange=updateLo
 $("#logBtn").onclick=showLog;
 $("#guide").onclick=showGuide;
 $("#quit").onclick=leaveRoom;$("#rules").onclick=showRules;
+$("#pinBtnTop").onclick=togglePinMode;
+$("#pinBtnFloat").onclick=togglePinMode;
+$("#boardPingArea").addEventListener("click",e=>{
+ if(!PIN.active)return;
+ e.preventDefault();
+ e.stopPropagation();
+ e.stopImmediatePropagation();
+ sendBoardPing(e);
+},true);
 $("#cast").onclick=mainCast;$("#reel").onclick=mainReel;$("#fin").onclick=mainFinesse;$("#end").onclick=endTurn;$("#cancelActive").onclick=cancelActiveProcess;$("#dm").onclick=()=>finesseDie(-1);$("#dp").onclick=()=>finesseDie(1);$("#hm").onclick=moveHatchBonus;$("#fly").onclick=flyBonus;$("#drag").onclick=dragBonus;$("#strike").onclick=extraStrike;$("#restart").onclick=restartCast;
 $("#modalbg").onclick=e=>{if(e.target===$("#modalbg")&&!modalLocked)closeModal()};
 })();
